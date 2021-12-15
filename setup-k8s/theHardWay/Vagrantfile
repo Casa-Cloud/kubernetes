@@ -1,0 +1,94 @@
+# -*- mode: ruby -*-
+# vi:set ft=ruby sw=2 ts=2 sts=2:
+
+NUM_MASTER_NODE = 2
+NUM_WORKER_NODE = 2
+
+IP_NW = "192.168.56."
+MASTER_IP_START = 10
+NODE_IP_START = 20
+LB_IP_START = 30
+ADMINISTRATOR_START = 40
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/bionic64"
+  # Disable automatic box update checking.
+  config.vm.box_check_update = false
+  # config.vm.provision "shell", path: "ubuntu/initialSetup.sh"
+
+  # Provision Master Nodes
+  (1..NUM_MASTER_NODE).each do |i|
+      config.vm.define "master0#{i}" do |node|
+        node.vm.provider "virtualbox" do |vb|
+            vb.name = "master0#{i}"
+            vb.memory = 2048
+            vb.cpus = 2
+        end
+        node.vm.hostname = "master0#{i}"
+        node.vm.network :private_network, ip: IP_NW + "#{MASTER_IP_START + i}"
+        node.vm.network "forwarded_port", guest: 22, host: "#{2710 + i}"
+        node.vm.provision "shell", path: "ubuntu/initialSetup.sh"
+        node.vm.provision "setup-hosts", :type => "shell", :path => "ubuntu/setup-hosts.sh" do |s|
+          s.args = ["enp0s8"]
+        end
+        node.vm.provision "setup-dns", type: "shell", :path => "ubuntu/update-dns.sh"
+        node.vm.provision "setup-dns", type: "shell", :path => "ubuntu/setup-ssh.sh", privileged: false
+        # node.vm.provision "shell", type: "shell", path: "ubuntu/setupmaster.sh"
+      end
+  end
+
+  # Provision Worker Nodes
+  (1..NUM_WORKER_NODE).each do |i|
+    config.vm.define "worker0#{i}" do |node|
+        node.vm.provider "virtualbox" do |vb|
+            vb.name = "worker0#{i}"
+            vb.memory = 1024
+            vb.cpus = 2
+        end
+        node.vm.hostname = "worker0#{i}"
+        node.vm.network :private_network, ip: IP_NW + "#{NODE_IP_START + i}"
+        node.vm.network "forwarded_port", guest: 22, host: "#{2720 + i}"
+        node.vm.provision "shell", path: "ubuntu/initialSetup.sh"
+        node.vm.provision "setup-hosts", :type => "shell", :path => "ubuntu/setup-hosts.sh" do |s|
+          s.args = ["enp0s8"]
+        end
+        node.vm.provision "setup-dns", type: "shell", :path => "ubuntu/update-dns.sh"
+        node.vm.provision "setup-dns", type: "shell", :path => "ubuntu/setup-ssh.sh", privileged: false
+        # node.vm.provision "setup-dns", type: "shell", :path => "ubuntu/setupworker.sh"
+    end
+  end
+
+  # Provision Load Balancer Node
+  config.vm.define "lb" do |node|
+    node.vm.provider "virtualbox" do |vb|
+      vb.name = "lb"
+      vb.memory = 512
+      vb.cpus = 1
+    end
+    node.vm.hostname = "lb"
+    node.vm.network :private_network, ip: IP_NW + "#{LB_IP_START}"
+	  node.vm.network "forwarded_port", guest: 22, host: 2730
+    node.vm.provision "setup-hosts", :type => "shell", :path => "ubuntu/setup-hosts.sh" do |s|
+      s.args = ["enp0s8"]
+    end
+    node.vm.provision "setup-dns", type: "shell", :path => "ubuntu/update-dns.sh"
+    node.vm.provision "setup-dns", type: "shell", :path => "ubuntu/setup-ssh.sh", privileged: false
+  end
+
+  # Provision Admin Node
+  config.vm.define "admin" do |node|
+    node.vm.provider "virtualbox" do |vb|
+      vb.name = "admin"
+      vb.memory = 512
+      vb.cpus = 1
+    end
+    node.vm.hostname = "admin"
+    node.vm.network :private_network, ip: IP_NW + "#{ADMINISTRATOR_START}"
+	  node.vm.network "forwarded_port", guest: 22, host: 2731
+    node.vm.provision "setup-hosts", :type => "shell", :path => "ubuntu/setup-hosts.sh" do |s|
+      s.args = ["enp0s8"]
+    end
+    node.vm.provision "setup-dns", type: "shell", :path => "ubuntu/update-dns.sh"
+    node.vm.provision "setup-dns", type: "shell", :path => "ubuntu/setup-ssh.sh", privileged: false
+  end
+  
+end
