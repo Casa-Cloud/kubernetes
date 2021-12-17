@@ -72,7 +72,7 @@ DNS.4 = kubernetes.default.svc.cluster.local
 IP.1 = 10.96.0.1
 IP.2 = 192.168.56.11
 IP.3 = 192.168.56.12
-IP.4 = 192.168.5.30
+IP.4 = 192.168.56.30
 IP.5 = 127.0.0.1
 EOF
 ```
@@ -153,19 +153,19 @@ for instance in master01 master02; do
 done
 ```
 
-<h2>Step:-4 - Generating Kubernetes Configuration Files For Authentication</h2>
+<h2>Step:-4 - Generating Kubernetes Configuration Files For Authenticatio n- Admin VM</h2>
 <p> Generating kubeconfig files for the controller manager, kube-proxy, scheduler clients and the admin user.</p>
 
  <h3>Kubernetes Public IP Address</h3>
   Each kubeconfig requires a Kubernetes API Server to connect to.
  To support high availability the IP address assigned to the load balancer will be used.
- In our case it is 192.168.5.30
+ In our case it is 192.168.56.30
 
-<h3>Step:-4.1 - Setting  Env Variable For Loadbalancer VM</h3>
+<h3>Step:-4.1 - Setting  Env Variable For Loadbalancer VM - Admin VM</h3>
 
-COMMAND:- `LOADBALANCER_ADDRESS=192.168.5.30` 
+COMMAND:- `LOADBALANCER_ADDRESS=192.168.56.30` 
 
-<h3>Step:-4.2 - Generate a kubeconfig file for the kube-proxy service</h3>
+<h3>Step:-4.2 - Generate a kubeconfig file for the kube-proxy service - Admin VM</h3>
 
 ```
 {
@@ -191,7 +191,7 @@ COMMAND:- `LOADBALANCER_ADDRESS=192.168.5.30`
 ```
 
 
-<h3>Step:-4.3 - Generate a kubeconfig file for the kube-controller-manager service</h3>
+<h3>Step:-4.3 - Generate a kubeconfig file for the kube-controller-manager service - Admin VM</h3>
 
 ```
 {
@@ -217,7 +217,7 @@ COMMAND:- `LOADBALANCER_ADDRESS=192.168.5.30`
 ```
 
 
-<h3>Step:-4.4 - Generate a kubeconfig file for the kube-scheduler service</h3>
+<h3>Step:-4.4 - Generate a kubeconfig file for the kube-scheduler service - Admin VM</h3>
 
 ```
 {
@@ -242,7 +242,7 @@ COMMAND:- `LOADBALANCER_ADDRESS=192.168.5.30`
 }
 ```
 
-<h3>Step:-4.5 - Generate a kubeconfig file for the admin</h3>
+<h3>Step:-4.5 - Generate a kubeconfig file for the admin - Admin VM</h3>
 
 ```
 {
@@ -267,7 +267,7 @@ COMMAND:- `LOADBALANCER_ADDRESS=192.168.5.30`
 }
 ```
 
-<h3>Step:-4.5 - Distribute the Kubernetes Configuration Files for worker node </h3>
+<h3>Step:-4.6 - Distribute the Kubernetes Configuration Files for worker node - Admin VM</h3>
 
 ```
 for instance in worker01 worker02; do
@@ -275,7 +275,7 @@ for instance in worker01 worker02; do
 done
 ```
 
-<h3>Step:-4.5 - Distribute the Kubernetes Configuration Files for Master node </h3>
+<h3>Step:-4.7 - Distribute the Kubernetes Configuration Files for Master node - Admin VM</h3>
 
 ```
 for instance in master01 master02; do
@@ -283,11 +283,11 @@ for instance in master01 master02; do
 done
 ```
 
-<h2>Step:-5 - Generating Encryption Key </h2>
+<h2>Step:-5 - Generating Encryption Key - Admin VM </h2>
 <p>Kubernetes stores a variety of data including cluster state, application configurations, and secrets.
 To store this data in encrypted format we have to generate the encreption key</p>
 
-<h3>Step:-5.1 - Generate an encryption key </h3>
+<h3>Step:-5.1 - Generate an encryption key - Admin VM </h3>
 
 COMMAND:- `ENCRYPTION_KEY=$(head -c 32 /dev/urandom | base64)` 
 
@@ -295,7 +295,7 @@ Verify ENCRYPTION_KEY
 
 COMMAND:- `echo $ENCRYPTION_KEY` 
 
-<h3>Step:-5.2 - Generate an encryption key config file </h3>
+<h3>Step:-5.2 - Generate an encryption key config file - Admin VM </h3>
 
 ```
 cat > encryption-config.yaml <<EOF
@@ -313,7 +313,7 @@ resources:
 EOF
 ```
 
-<h3>Step:-5.3 - Move encryption config to master servers  </h3>
+<h3>Step:-5.3 - Move encryption config to master servers  - Admin VM</h3>
 
 ```
 for instance in master01 master02; do
@@ -321,24 +321,24 @@ for instance in master01 master02; do
 done
 ```
 
-<h2>Step:-6 - Bootstrapping the etcd Cluster </h2>
+<h2>Step:-6 - Bootstrapping the etcd Cluster - All Masters</h2>
 
 <p>NOTE:- Make sure you perform this step on only all Master VM</p>
 
 <p>Kubernetes components are stateless and store cluster state in etcd,
 we will bootstrap a two node etcd cluster and configure it.</p>
 
-<h3>Step:-6.1 - Verify which etcd version is supported with kubernetes version </h3>
+<h3>Step:-6.1 - Verify which etcd version is supported with kubernetes version - All Masters</h3>
 
-<h3>Step:-6.1.1 - Download Kuberntes release binary of perticular version </h3>
+<h3>Step:-6.1.1 - Download Kuberntes release binary of perticular version - All Masters</h3>
 
 COMMAND:- `wget https://github.com/kubernetes/kubernetes/releases/download/v1.22.0/kubernetes.tar.gz` 
 
-<h3>Step:-6.1.2 - Extract the Binary </h3>
+<h3>Step:-6.1.2 - Extract the Binary - All Masters</h3>
 
 COMMAND:- `tar -xzvf kubernetes.tar.gz` 
 
-<h3>Step:-6.1.3 - Read ETCD Version </h3>
+<h3>Step:-6.1.3 - Read ETCD Version - All Masters</h3>
 
 COMMAND:-  `cat kubernetes/hack/lib/etcd.sh | grep 'ETCD_VERSION=${ETCD_VERSION'`
 
@@ -631,11 +631,11 @@ etcd-1               Healthy   {"health":"true","reason":""}
 
 <p>In loadbalancer (lb) Virtual machine we will install HA Proxy - high availability load balancer and proxy server for TCP and HTTP-based applications that spreads requests across multiple servers.</p>
 
-<h3>Step:-8.1 - Install HAProxy </h3>
+<h3>Step:-8.1 - Install HAProxy - In loadbalancer VM</h3>
 
 COMMAND:- `sudo apt-get update && sudo apt-get install -y haproxy`
 
-<h3>Step:-8.2 - Create HA proxy configuration </h3>
+<h3>Step:-8.2 - Create HA proxy configuration - In loadbalancer VM</h3>
 
 ```
 cat <<EOF | sudo tee /etc/haproxy/haproxy.cfg 
@@ -927,3 +927,372 @@ COMMAND:- `sudo journalctl -u kubelet.service --no-pager --output cat -f`
 COMMAND:- `sudo systemctl status kube-proxy.service`
 
 COMMAND:- `sudo journalctl -u kube-proxy.service --no-pager --output cat -f`
+
+<h3>Step:-9.11 - Validate Nodes are listed now on each master node  - ON EACH MASTER NODE</h3>
+
+COMMAND:- `kubectl get nodes --kubeconfig admin.kubeconfig`
+
+Output:-
+
+```
+NAME       STATUS     ROLES    AGE     VERSION
+worker01   NotReady   <none>   2m49s   v1.22.0
+worker02   NotReady   <none>   2m46s   v1.22.0
+```
+
+<p>The status is NotReady as we are yet to setup the pod network which we will do in next steps</p>
+
+<h2>Step:-10:- Configuring kubectl for Remote Access - On Admin Node</h2>
+
+<h3>Step:-10.1:- configure kube configuration - On Admin Node</h3>
+
+```
+{
+  KUBERNETES_LB_ADDRESS=192.168.56.30
+
+  kubectl config set-cluster kubernetes-the-hard-way \
+    --certificate-authority=ca.crt \
+    --embed-certs=true \
+    --server=https://${KUBERNETES_LB_ADDRESS}:6443
+
+  kubectl config set-credentials admin \
+    --client-certificate=admin.crt \
+    --client-key=admin.key
+
+  kubectl config set-context kubernetes-the-hard-way \
+    --cluster=kubernetes-the-hard-way \
+    --user=admin
+
+  kubectl config use-context kubernetes-the-hard-way
+}
+```
+
+<h3>Step:-10.2:- Validate kube configuration - On Admin Node</h3>
+
+COMMAND:- `kubectl get nodes`
+
+Output:- 
+
+```
+NAME       STATUS     ROLES    AGE     VERSION
+worker01   NotReady   <none>   8m2s    v1.22.0
+worker02   NotReady   <none>   7m59s   v1.22.0
+```
+
+<h2>Step:-11:- Setup Container Netwoking </h2>
+
+<h3>Step:-11.1:- Deploy Calico network - On Admin Node</h3>
+
+COMMAND:- `kubectl --kubeconfig=/etc/kubernetes/admin.conf create -f https://docs.projectcalico.org/v3.18/manifests/calico.yaml`
+
+
+<h3>Step:-11.2:- Install CNI plugins - On ALL WORKER Nodes</h3>
+
+<p>Download the CNI Plugins required for weave on each of the worker nodes</p>
+
+COMMAND:- `wget https://github.com/containernetworking/plugins/releases/download/v1.0.1/cni-plugins-linux-amd64-v1.0.1.tgz`
+
+<h3>Step:-11.3:- Extract it to /opt/cni/bin directory - On ALL WORKER Nodes</h3>
+
+COMMAND:- `sudo tar -xzvf cni-plugins-linux-amd64-v1.0.1.tgz --directory /opt/cni/bin/`
+
+<h3>Step:-12:- Validate Node Status Again - On Admin Node</h3>
+
+COMMAND:- `kubectl get nodes`
+
+Output:- 
+
+```
+NAME       STATUS   ROLES    AGE   VERSION
+worker01   Ready    <none>   29m   v1.22.0
+worker02   Ready    <none>   29m   v1.22.0
+```
+
+<h2>Step:-12:- Setup RBAC for Kubelet Authorization  - On Admin Node</h2>
+
+<p>How the container or pod's log are been shown -> via kube-API -> kubelet
+
+but we have not given kube-API server permission to get the logs from kubelet
+
+You can validate this error  by getting logs from any pod Eg:-
+
+</p>
+
+```
+vagrant@admin:~$ kubectl get pods -n kube-system
+NAME              READY   STATUS    RESTARTS     AGE
+weave-net-jjn76   2/2     Running   1 (8h ago)   8h
+weave-net-w7rsk   2/2     Running   1 (8h ago)   8h
+vagrant@admin:~$ kubectl logs weave-net-jjn76 -c weave-init -n kube-system
+Error from server (Forbidden): Forbidden (user=kube-apiserver, verb=get, resource=nodes, subresource=proxy) ( pods/log weave-net-jjn76)
+
+```
+
+<h3>Step:-12.1:- configure RBAC permissions to allow the Kubernetes API Server to access the Kubelet API on each worker node</h3>
+
+
+```
+cat <<EOF | kubectl apply -f -
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  annotations:
+    rbac.authorization.kubernetes.io/autoupdate: "true"
+  labels:
+    kubernetes.io/bootstrapping: rbac-defaults
+  name: system:kube-apiserver-to-kubelet
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - nodes/proxy
+      - nodes/stats
+      - nodes/log
+      - nodes/spec
+      - nodes/metrics
+    verbs:
+      - "*"
+EOF
+
+
+cat <<EOF | kubectl apply -f -
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: system:kube-apiserver
+  namespace: ""
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:kube-apiserver-to-kubelet
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: User
+    name: kube-apiserver
+EOF
+```
+
+<h3>Step:-12.2:- Validate if we are able to get the logs from pods</h3>
+
+COMMAND:- `kubectl logs weave-net-jjn76 -c weave-init -n kube-system`
+
+Output:- EMPTY - But No error, As required.
+
+<h2>Step:-13:- Deploy the coredns cluster add-on  - On Admin Node</h2>
+
+<p>Before installing coredns Lets check the dns lookup for kubernetes DNS</p>
+
+<h3>Step:-13.1 :- Deploy a busybox image  - On Admin Node</h3>
+
+COMMAND:- `kubectl run  busybox --image=busybox:1.28 --command -- sleep 3600`
+
+```
+kubectl exec -ti busybox -- nslookup kubernetes
+Server:    10.96.0.10
+Address 1: 10.96.0.10
+.
+.
+and control did not return. That means it cannot resolve the 'kubernetes' DNS
+
+# Important:- to show by default in all the pod's resolve.conf the nameserver is added 10.96.0.10
+kubectl exec -ti busybox -- cat /etc/resolv.conf 
+nameserver 10.96.0.10
+search default.svc.cluster.local svc.cluster.local cluster.local
+
+```
+
+<h3>Step:-13.2:- Deploy the coredns cluster add-on  - On Admin Node</h3>
+
+```
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: coredns
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    kubernetes.io/bootstrapping: rbac-defaults
+  name: system:coredns
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - endpoints
+  - services
+  - pods
+  - namespaces
+  verbs:
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  annotations:
+    rbac.authorization.kubernetes.io/autoupdate: "true"
+  labels:
+    kubernetes.io/bootstrapping: rbac-defaults
+  name: system:coredns
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:coredns
+subjects:
+- kind: ServiceAccount
+  name: coredns
+  namespace: kube-system
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns
+  namespace: kube-system
+data:
+  Corefile: |
+    .:53 {
+        errors
+        health
+        kubernetes cluster.local in-addr.arpa ip6.arpa {
+          pods insecure
+          upstream
+          fallthrough in-addr.arpa ip6.arpa
+        }
+        prometheus :9153
+        proxy . /etc/resolv.conf
+        cache 30
+        loop
+        reload
+        loadbalance
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coredns
+  namespace: kube-system
+  labels:
+    k8s-app: kube-dns
+    kubernetes.io/name: "CoreDNS"
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      k8s-app: kube-dns
+  template:
+    metadata:
+      labels:
+        k8s-app: kube-dns
+    spec:
+      serviceAccountName: coredns
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
+        - key: "CriticalAddonsOnly"
+          operator: "Exists"
+      containers:
+      - name: coredns
+        image: coredns/coredns:1.2.2
+        imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+            memory: 170Mi
+          requests:
+            cpu: 100m
+            memory: 70Mi
+        args: [ "-conf", "/etc/coredns/Corefile" ]
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/coredns
+          readOnly: true
+        ports:
+        - containerPort: 53
+          name: dns
+          protocol: UDP
+        - containerPort: 53
+          name: dns-tcp
+          protocol: TCP
+        - containerPort: 9153
+          name: metrics
+          protocol: TCP
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            add:
+            - NET_BIND_SERVICE
+            drop:
+            - all
+          readOnlyRootFilesystem: true
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 60
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 5
+      dnsPolicy: Default
+      volumes:
+        - name: config-volume
+          configMap:
+            name: coredns
+            items:
+            - key: Corefile
+              path: Corefile
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kube-dns
+  namespace: kube-system
+  annotations:
+    prometheus.io/port: "9153"
+    prometheus.io/scrape: "true"
+  labels:
+    k8s-app: kube-dns
+    kubernetes.io/cluster-service: "true"
+    kubernetes.io/name: "CoreDNS"
+spec:
+  selector:
+    k8s-app: kube-dns
+  clusterIP: 10.96.0.10
+  ports:
+  - name: dns
+    port: 53
+    protocol: UDP
+  - name: dns-tcp
+    port: 53
+    protocol: TCP
+EOF
+```
+
+Output:- 
+
+```
+serviceaccount/coredns created
+clusterrole.rbac.authorization.k8s.io/system:coredns created
+clusterrolebinding.rbac.authorization.k8s.io/system:coredns created
+configmap/coredns created
+deployment.apps/coredns created
+service/kube-dns created
+```
+
+
+<p>After installing coreDNS - in Admin VM now the DNS kuberntes is resolving to kubernetes.default.svc.cluster.local</p>
+
+```
+vagrant@admin:~$ kubectl exec -it busybox -- nslookup kubernetes
+Server:    10.96.0.10
+Address 1: 10.96.0.10 kube-dns.kube-system.svc.cluster.local
+
+Name:      kubernetes
+Address 1: 10.96.0.1 kubernetes.default.svc.cluster.local
+```
