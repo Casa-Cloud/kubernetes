@@ -1103,6 +1103,9 @@ search default.svc.cluster.local svc.cluster.local cluster.local
 
 <h3>Step:-13.2:- Deploy the coredns cluster add-on  - On Admin Node</h3>
 
+<p>Reference:- https://kubernetes.io/docs/tasks/administer-cluster/coredns/#installing-coredns</p>
+
+
 ```
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
